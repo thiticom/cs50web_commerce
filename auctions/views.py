@@ -1,3 +1,5 @@
+from ast import Pass
+from tkinter import N
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
@@ -5,6 +7,7 @@ from django.shortcuts import render
 from django.urls import reverse
 
 from .models import User, Listing
+from .forms import NameForm, ListingForm
 
 
 def index(request):
@@ -64,3 +67,57 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "auctions/register.html")
+
+
+def create_listing(request):
+    if request.method == "POST":
+        form = ListingForm(request.POST)
+
+        if form.is_valid():
+            new_listing = form.save()
+            return HttpResponseRedirect(reverse("index"))
+
+    else:
+        form = ListingForm()
+
+    return render(request, "auctions/create.html", {'form': form} )
+
+
+def listing(request, list):
+    listing = Listing.objects.get(id=list)
+    return render(request, "auctions/listing.html", {
+        "listing":listing
+    })
+
+
+def watchlist(request):
+    watchlist = request.user.watchlist.all()
+
+    return render(request, "auctions/watchlist.html", {
+        "list":watchlist
+    })
+
+
+def add(request):
+    if request.method == "POST":
+        listing_id = int(request.POST["listing"])
+
+
+    listing = Listing.objects.get(id=listing_id)
+
+    request.user.watchlist.add(listing)
+
+    return HttpResponseRedirect(reverse("watchlist"))
+
+
+def delete(request):
+    if request.method == "POST":
+        listing_id = int(request.POST["listing"])
+
+
+    listing = Listing.objects.get(id=listing_id)
+
+    request.user.watchlist.remove(listing)
+
+    return HttpResponseRedirect(reverse("watchlist"))
+

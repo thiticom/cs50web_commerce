@@ -5,7 +5,7 @@
     <ul>
     {% for list in listings %}
         <li><img src="{{ list.image }}" width=300px> <br>
-            title: {{ list.title }} <br>
+            title: <a href="{% url 'listing' list.id %}">{{ list.title }}</a><br>
             description: {{ list.description }}
         </li>
     {% empty %}

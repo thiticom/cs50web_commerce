@@ -3,7 +3,7 @@ from django.db import models
 
 
 class User(AbstractUser):
-    pass
+    watchlist = models.ManyToManyField('Listing', related_name="interestgroups", blank="True")
 
 
 class Category(models.Model):
