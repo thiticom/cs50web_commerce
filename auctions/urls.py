@@ -12,5 +12,10 @@ urlpatterns = [
     path("<int:list>", views.listing, name="listing"),
     path("watchlist", views.watchlist, name="watchlist"),
     path("add", views.add, name="add"),
-    path("delete", views.delete, name="delete")
+    path("delete", views.delete, name="delete"),
+    path('post',views.post_comment, name="post"),
+    path('submit', views.submit_bid, name="submit"),
+    path('categories', views.categories, name="categories"),
+    path('category/<int:cat>', views.category, name="category"),
+    path('close',views.close, name="close")
 ]

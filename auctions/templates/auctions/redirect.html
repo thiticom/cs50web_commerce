@@ -1,0 +1,16 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+
+    <div>
+        {% if message %}
+            <div>{{ message }}</div>
+        {% endif %}
+
+        {% if list %}
+            <div> Go back to the listing:
+                <a href="{% url 'listing' list.id %}">{{ list.title }}</a></div>
+        {% endif %}
+
+    </div>
+{% endblock %}

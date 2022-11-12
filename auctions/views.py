@@ -1,13 +1,14 @@
 from ast import Pass
 from tkinter import N
+#from xml.etree.ElementTree import Comment
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Listing
-from .forms import NameForm, ListingForm
+from .models import User, Listing, Comment, Bid, Category
+from .forms import ListingForm, CommentForm, BidForm, CloseForm
 
 
 def index(request):
@@ -85,8 +86,27 @@ def create_listing(request):
 
 def listing(request, list):
     listing = Listing.objects.get(id=list)
+    comments = listing.comment_set.all().order_by('-id')
+    bid = listing.bid_set.all().order_by('-bid').first()
+    won_user = None if bid is None else bid.user
+
+    new_comment = Comment(user=request.user, listing=listing)
+    new_bid = Bid(user=request.user, listing=listing)
+    bid_form = BidForm(instance=new_bid)
+    comment_form = CommentForm(instance=new_comment)
+    close_form = CloseForm(instance=listing, initial ={
+        'temp_id': listing.id,
+        'won_by' : won_user,
+        'closed': True
+        })
+
     return render(request, "auctions/listing.html", {
-        "listing":listing
+        "listing":listing,
+        "comments":comments,
+        "bid":bid,
+        'bid_form':bid_form,
+        'comment_form':comment_form,
+        'close_form':close_form
     })
 
 
@@ -121,3 +141,73 @@ def delete(request):
 
     return HttpResponseRedirect(reverse("watchlist"))
 
+
+def post_comment(request):
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+
+        if form.is_valid():
+            form.user = request.user
+            form.save()
+        
+    return HttpResponseRedirect(reverse("index"))
+    
+
+def submit_bid(request):
+    if request.method == "POST":
+        form = BidForm(request.POST)
+
+        if form.is_valid():
+            f = form.save(commit=False)
+            high_bid = f.listing.bid_set.all().order_by('-bid').first()
+            high_bid = f.listing.start_bid if high_bid is None else high_bid
+
+            if f.bid > high_bid.bid:
+                f.save()
+                return render(request, "auctions/redirect.html", {
+                    "message": "TEST",
+                    "list" : f.listing
+                    })
+        
+    return render(request, "auctions/redirect.html", {
+                "message": "You have to bid higher.",
+                "list" : f.listing
+                })
+
+
+def categories(request):
+    categories = Category.objects.all()
+    print(categories)
+    return render(request, "auctions/categories.html", {
+        "cat":categories
+    })
+
+
+def category(request,cat):
+    listings = Listing.objects.filter(cat=cat)
+    return render(request, "auctions/category.html", {
+        "listings":listings
+    })
+
+
+def close(request):
+    if request.method == "POST":
+        listing = Listing.objects.get(id=request.POST.get("temp_id"))
+        form = CloseForm(request.POST, instance=listing)
+
+        if form.is_valid():
+            f = form.save(commit=False)
+            f.won_by = request.user
+            f.closed=True
+            f.save()
+            print("ok")
+
+            return render(request, "auctions/redirect.html", {
+                "message": "You have closed the listing.",
+                "list": listing
+                })
+
+    return render(request, "auctions/redirect.html", {
+        "message": "Something went wrong",
+        "list": listing
+        })
