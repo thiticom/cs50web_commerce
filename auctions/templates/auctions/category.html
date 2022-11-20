@@ -2,14 +2,20 @@
 
 {% block body %}
     <h2>Listing</h2>
-    <ul>
+    <div>
     {% for list in listings %}
-        <li><img src="{{ list.image }}" width=300px> <br>
-            title: <a href="{% url 'listing' list.id %}">{{ list.title }}</a><br>
-            description:  {{ list.description }}
-        </li>
+        <div style="margin-bottom:2em" >
+            <div>
+                <img src="{{ list.image }}" width=150px>
+            </div>
+            <div>
+                title: <a href="{% url 'listing' list.id %}">{{ list.title }}</a><br>
+                description: {{ list.description }}
+            </div>
+            
+        </div>
     {% empty %}
-        <li>No listings</li>
+        <div>No listings</div>
     {% endfor %}
-    </ul>
+    </div>
 {% endblock %}

@@ -2,22 +2,45 @@
 
 {% block body %}
     <div>
+        {% if listing.closed is True and listing.won_by == user %}
+        <div> You won!</div>
+        {% endif%}
         <h2>{{ listing.title }} </h2>
-        <form action="{% url 'add' %}" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="listing" value="{{listing.id}}">
-            <input type="submit" value="Add to watchlist">
-        </form>
+        {% if user.is_authenticated %}
+            {% if listing in user.watchlist.all %}
+                <form method="POST" action="{% url 'delete' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="listing" value="{{listing.id}}">
+                    <input type="submit" value="Remove from watchlist">
+                </form>
+            {% else %}
+                <form action="{% url 'add' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="listing" value="{{listing.id}}">
+                    <input type="submit" value="Add to watchlist">
+                </form>
+            {% endif %}
+        {% endif %}
     </div>
 
     <div>
         <div>
-            <img src="{{ listing.image }}">
+            <img src="{{ listing.image }}" >
         </div>
         <div>
             <ul>
                 <li>Description: {{ listing.description }}</li>
-                <li>Categories: {{ listing.cat.all }}</li>
+                <li>Categories: 
+                    {% for cat in listing.cat.all %}
+                        {% if forloop.last is False %}
+                            {{ cat.name }}, 
+                        {% else %}
+                            {{ cat.name }}
+                        {% endif %}
+                        
+                    {% empty %}
+                        None
+                    {% endfor %}</li>
                 <li>Start bid: {{ listing.startbid }}</li>
                 <li>Current Bid: {{ bid.bid }}</li>
                 <li>Closed: {{ listing.closed }}</li>
@@ -26,18 +49,20 @@
         <div>
             
 
-            {% if listing.closed is False %}
+            {% if listing.closed is False and user.is_authenticated %}
                 <form action="{% url 'submit' %}" method="post">
                     {% csrf_token %}
                     {{ bid_form }}
                     <input type="submit" value="Submit bid">
                 </form>
 
-                <form action="{% url 'close' %}" method="post">
-                    {% csrf_token %}
-                    {{ close_form }}    
-                    <input type="submit" value="Close this listing">
-                </form>
+                {% if listing.created_by == user %}
+                    <form action="{% url 'close' %}" method="post">
+                        {% csrf_token %}
+                        {{ close_form }}    
+                        <input type="submit" value="Close this listing">
+                    </form>
+                {% endif %}
 
             {% endif %}
         </div>
@@ -48,11 +73,13 @@
             {% empty %}
             <li>No comments</li>
             {% endfor %}
-            <form action="{% url 'post' %}" method="post">
-                {% csrf_token %}
-                {{ comment_form }}
-                <input type="submit" value="Post">
-            </form>
+            {% if user.is_authenticated %}
+                <form action="{% url 'post' %}" method="post">
+                    {% csrf_token %}
+                    {{ comment_form }}
+                    <input type="submit" value="Post">
+                </form>
+            {% endif %}
 
 
         </div>

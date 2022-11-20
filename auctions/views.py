@@ -75,7 +75,9 @@ def create_listing(request):
         form = ListingForm(request.POST)
 
         if form.is_valid():
-            new_listing = form.save()
+            new_listing = form.save(commit=False)
+            new_listing.created_by=request.user
+            new_listing.save()
             return HttpResponseRedirect(reverse("index"))
 
     else:
@@ -90,9 +92,13 @@ def listing(request, list):
     bid = listing.bid_set.all().order_by('-bid').first()
     won_user = None if bid is None else bid.user
 
-    new_comment = Comment(user=request.user, listing=listing)
-    new_bid = Bid(user=request.user, listing=listing)
-    bid_form = BidForm(instance=new_bid)
+    new_comment = Comment(listing=listing)
+
+    bid_form = None
+    if request.user.is_authenticated:
+        new_bid = Bid(user=request.user ,listing=listing)
+        bid_form = BidForm(instance=new_bid)
+
     comment_form = CommentForm(instance=new_comment)
     close_form = CloseForm(instance=listing, initial ={
         'temp_id': listing.id,
@@ -127,7 +133,7 @@ def add(request):
 
     request.user.watchlist.add(listing)
 
-    return HttpResponseRedirect(reverse("watchlist"))
+    return HttpResponseRedirect(reverse("listing", args=[listing_id]))
 
 
 def delete(request):
@@ -139,7 +145,7 @@ def delete(request):
 
     request.user.watchlist.remove(listing)
 
-    return HttpResponseRedirect(reverse("watchlist"))
+    return HttpResponseRedirect(reverse("listing", args=[listing_id]))
 
 
 def post_comment(request):
@@ -160,7 +166,10 @@ def submit_bid(request):
         if form.is_valid():
             f = form.save(commit=False)
             high_bid = f.listing.bid_set.all().order_by('-bid').first()
-            high_bid = f.listing.start_bid if high_bid is None else high_bid
+            high_bid = f.listing.startbid if high_bid is None else high_bid
+
+            print(f.bid)
+            print(high_bid.bid)
 
             if f.bid > high_bid.bid:
                 f.save()
@@ -197,7 +206,7 @@ def close(request):
 
         if form.is_valid():
             f = form.save(commit=False)
-            f.won_by = request.user
+            #f.won_by = request.user
             f.closed=True
             f.save()
             print("ok")

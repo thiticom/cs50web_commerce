@@ -10,7 +10,7 @@
 
     <form action="{% url 'create' %}" method="post">
         {% csrf_token %}
-        {{ form }}
+        {{ form.as_div }}
         <input type="submit" value="Create Listing">
     </form>
 

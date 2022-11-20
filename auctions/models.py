@@ -16,9 +16,9 @@ class Category(models.Model):
 
 class Listing(models.Model):
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.CharField(max_length=300)
     startbid = models.FloatField()
-    image = models.URLField()
+    image = models.URLField(blank=True)
     cat = models.ManyToManyField(Category, related_name="listings", blank=True)
     created_by = models.ForeignKey(
         User,
